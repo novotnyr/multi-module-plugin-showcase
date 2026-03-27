@@ -1,22 +1,21 @@
 plugins {
-    kotlin("jvm")
-}
-
-group = "com.github.novotnyr.mincssrel"
-version = "1.0.0"
-
-repositories {
-    mavenCentral()
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.intelliJPlatformModule)
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
+    intellijPlatform {
+        intellijIdea(providers.gradleProperty("platformVersion"))
+    }
 }
 
 kotlin {
     jvmToolchain(21)
 }
 
-tasks.test {
-    useJUnitPlatform()
+repositories {
+    mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }

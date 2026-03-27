@@ -31,6 +31,8 @@ dependencies {
     testImplementation(libs.opentest4j)
 
     intellijPlatform {
+        pluginModule(implementation(project(":shared")))
+
         intellijIdea(providers.gradleProperty("platformVersion"))
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
         plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })

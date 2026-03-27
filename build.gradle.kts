@@ -18,14 +18,6 @@ kotlin {
     jvmToolchain(21)
 }
 
-repositories {
-    mavenCentral()
-
-    intellijPlatform {
-        defaultRepositories()
-    }
-}
-
 dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.opentest4j)

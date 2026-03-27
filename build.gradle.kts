@@ -18,6 +18,11 @@ kotlin {
     jvmToolchain(21)
 }
 
+subprojects {
+    plugins.apply("org.jetbrains.kotlin.jvm")
+    plugins.apply("org.jetbrains.intellij.platform.module")
+}
+
 dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.opentest4j)

@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>org.jetbrains.plugins.template</id>
+    <id>com.github.novotnyr.mincssrel</id>
     <name>IntelliJ Platform Plugin Template</name>
     <vendor>JetBrains</vendor>
 

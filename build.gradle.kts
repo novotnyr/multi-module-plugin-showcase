@@ -14,13 +14,20 @@ plugins {
 group = providers.gradleProperty("pluginGroup").get()
 version = providers.gradleProperty("pluginVersion").get()
 
-kotlin {
-    jvmToolchain(21)
-}
-
 subprojects {
     plugins.apply("org.jetbrains.kotlin.jvm")
     plugins.apply("org.jetbrains.intellij.platform.module")
+}
+
+allprojects {
+    kotlin {
+        jvmToolchain(21)
+    }
+    dependencies {
+        intellijPlatform {
+            intellijIdea(providers.gradleProperty("platformVersion"))
+        }
+    }
 }
 
 dependencies {
@@ -31,10 +38,6 @@ dependencies {
         pluginModule(implementation(project(":shared")))
         pluginModule(implementation(project(":css")))
 
-        intellijIdea(providers.gradleProperty("platformVersion"))
-        bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
-        plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
-        bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',') })
         testFramework(TestFrameworkType.Platform)
     }
 }

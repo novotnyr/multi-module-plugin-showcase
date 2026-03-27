@@ -6,13 +6,7 @@ plugins {
 dependencies {
     implementation(project(":shared"))
     intellijPlatform {
-        bundledPlugins(providers.gradleProperty("cssPlatformBundledPlugins").map { it.split(',') })
+        //bundledPlugins(providers.gradleProperty("cssPlatformBundledPlugins").map { it.split(',') })
     }
 }
 
-repositories {
-    mavenCentral()
-    intellijPlatform {
-        defaultRepositories()
-    }
-}

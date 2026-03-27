@@ -3,5 +3,7 @@
     <name>IntelliJ Platform Plugin Template</name>
     <vendor>JetBrains</vendor>
 
-    <depends>com.intellij.modules.platform</depends>
+    <content>
+        <module name="mincssrel.shared" loading="required" />
+    </content>
 </idea-plugin>

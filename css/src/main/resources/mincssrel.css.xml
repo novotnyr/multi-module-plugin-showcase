@@ -3,4 +3,11 @@
         <module name="mincssrel.shared" />
         <plugin id="com.intellij.css"/>
     </dependencies>
+
+    <actions>
+        <action id="com.github.novotnyr.mincssrel.css.CssAction"
+                class="com.github.novotnyr.mincssrel.css.CssAction"
+                text="Invoke CSS Action"
+        />
+    </actions>
 </idea-plugin>

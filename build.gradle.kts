@@ -32,6 +32,7 @@ dependencies {
 
     intellijPlatform {
         pluginModule(implementation(project(":shared")))
+        pluginModule(implementation(project(":css")))
 
         intellijIdea(providers.gradleProperty("platformVersion"))
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })

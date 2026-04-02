@@ -1,14 +1,16 @@
-Plugin Model v2 is now available as an experimental way to structure, package and build plugins. How to create a fresh modular plugin based on this model? Let's find out!
-
-We will use a template built on IntelliJ Platform Gradle Plugin, adapt it and create two plugin modules: one core module and another one that optionally depends on a bundled CSS plugin.
+Plugin Model v2 is now available as an experimental way to structure, package, and build plugins.
+How do you create a fresh modular plugin based on this model?
+Let's find out.
 
 ## Getting started
 
-Use the [IntelliJ Platform Plugin Template](https://github.com/new?template_name=intellij-platform-plugin-template&template_owner=JetBrains) as a starting point for a fresh plugin Git repository.
+Use the [IntelliJ Platform Plugin Template](https://github.com/new?template_name=intellij-platform-plugin-template&template_owner=JetBrains) as the starting point for a fresh plugin repository.
+After you open the repository in IntelliJ IDEA, remove all Kotlin source files, resource bundles, and XML files from test data.
+Since the final plugin uses a different layout, keeping the template boilerplate only adds noise.
 
-After opening the repository in IntelliJ IDEA, remove all Kotlin files, resource bundles, erase all extensions in the `plugin.xml` plugin descriptor, and delete all XML files in test data. The final plugin will have a completely different directory layout, anyways.
+In Plugin Model v2, the `plugin.xml` does not contain any actions, extensions, or listeners.
+Reduce this file to the bare minimum.
 
-The `plugin.xml` will boil down to the bare-bones structure:
 ```xml
 <idea-plugin>
     <id>org.jetbrains.plugins.template</id>
@@ -17,49 +19,48 @@ The `plugin.xml` will boil down to the bare-bones structure:
 </idea-plugin>
 ```
 
-Now, change the project coordinates.
+Update the project coordinates.
+In `settings.gradle.kts`, set the Gradle root project name.
 
-In `settings.gradle.kts`, modify the Gradle project name:
-```properties
+```kotlin
 rootProject.name = "mincssrel"
 ```
 
-Change `gradle.properties`: 
+Update `gradle.properties` with the plugin coordinates.
+
 ```properties
 pluginGroup = com.github.novotnyr.mincssrel
 pluginName = Mini Modular CSS Showcase
 pluginVersion = 1.0.0
 ```
 
-And finally, in `plugin.xml`, change the plugin ID.
+Finally, update the plugin ID in `plugin.xml`.
+
 ```xml
 <id>com.github.novotnyr.mincssrel</id>
 ```
 
-## Creating a first content module
 
-In Plugin Model v2, a plugin consists of multiple _content modules_. In Gradle, such plugin is a [multi-project build](https://docs.gradle.org/current/userguide/multi_project_builds_intermediate.html), where each content module maps to a Gradle subproject.
+## Creating the first plugin content module
 
-The primary content module will be named `shared`. It will contain the plugin core functionality and shared resources. It is the foundation upon which other content modules can be built, allowing for modular and maintainable plugin development.
+In Plugin Model v2, a plugin consists of multiple _plugin content modules_, and in Gradle terms this maps to a [multi-project build](https://docs.gradle.org/current/userguide/multi_project_builds_intermediate.html) where each content module is a subproject.
+Create the first plugin content module as `shared`, which will host your core functionality and shared resources.
 
-In IntelliJ IDEA, add a new Gradle module with `mincssrel` as a parent.
-
-Make sure that `settings.gradle.kts` contains the following directive:
+In IntelliJ IDEA, add a new Gradle module with `mincssrel` as the parent and make sure `settings.gradle.kts` includes it as a subproject.
 
 ```kotlin
 include("shared")
 ```
 
-Any Gradle build script for content module needs to declare the `org.jetbrains.intellij.platform.module` Gradle plugin.
-Since the plugin template uses [Gradle version catalog](https://docs.gradle.org/current/userguide/version_catalogs.html), declare the necessary catalog item.
-In `gradle/libs.versions.toml`, add the following lines:
-```
+Every content module build script must apply the `org.jetbrains.intellij.platform.module` Gradle plugin.
+Because the template uses a [Gradle version catalog](https://docs.gradle.org/current/userguide/version_catalogs.html), add this catalog alias in `gradle/libs.versions.toml`.
+
+```toml
 intelliJPlatformModule = { id = "org.jetbrains.intellij.platform.module" }
 ```
 
-The version for this catalog item will be shared with the the `intelliJPlatform ` catalog item.
-
-The Gradle build script for the `shared` module, `shared/build.gradle.kts` should look like this:
+This alias reuses the same plugin version as the existing `intelliJPlatform` catalog item.
+Then create `shared/build.gradle.kts` with the following content.
 
 ```kotlin
 plugins {
@@ -85,19 +86,18 @@ repositories {
 }
 ```
 
-The content module uses the Kotlin Gradle plugin along with the IntelliJ PLatform Module Gradle plugin.
-Furthermore, it declares a dependency on the IntelliJ IDEA SDK, as most probably it will need to access the basic APIs in this IDE. Such IDE will be downloaded from the corresponding repository declared in the `intellijPlatform ` [dependency extension](https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html).
+This setup applies both Kotlin Gradle plugin and the IntelliJ Platform Module Gradle plugin, and it declares a dependency on the IntelliJ IDEA SDK APIs.
 
-Finally, add the dependency between the plugin descriptor module and the `shared` content module.
+Now add a dependency from the parent plugin module to `shared`.
+In `build.gradle.kts`, add the following line to the `dependencies` block.
 
-In `build.gradle.kts`, add the following lines:
 ```kotlin
 pluginModule(implementation(project(":shared")))
 ```
 
-## Content module content
+## Content module functionality
 
-To showcase the shared functionality, create a new action.
+To showcase the `shared` module, create a simple action.
 
 ```kotlin
 package com.github.novotnyr.mincssrel
@@ -113,14 +113,18 @@ class SharedAction : DumbAwareAction() {
 }
 ```
 
-## Content module descriptors
+## Plugin content module descriptors
 
-Each content module needs its own descriptor that must follow a naming convention. 
+Each plugin content module needs its own descriptor file. 
+Contrary to the `plugin.xml`, such a descriptor belongs to the root of the classpath. 
+The name of the descriptor file follows a naming convention:
 
-It is prefixed with the name of the Gradle project from the `rootProject.name` in the `settings.gradle.kts` file. Then, the content module name is appended to the file name, with `.xml` suffix.
+1. It should start with the value of `rootProject.name` from the `settings.gradle.kts`.
+2. Then, separated with a dot (`.`), follows the content module name.
+2. It has a `.xml` extension.
 
-As a consequence, create
-a file `shared/src/main/resources/mincssrel.shared.xml` and declare the action in it:
+Following this convention, create `shared/src/main/resources/mincssrel.shared.xml` and declare the action there.
+
 ```xml
 <idea-plugin>
     <actions>
@@ -134,52 +138,47 @@ a file `shared/src/main/resources/mincssrel.shared.xml` and declare the action i
 
 ## Content module declarations
 
-Having a content module ready, declare it in the main plugin descriptor `plugin.xml`:
+The plugin content module must be declared in the `plugin.xml` descriptor.
 
-```
+```xml
 <content>
-    <module name="mincssrel.shared" 
+    <module name="mincssrel.shared"
             loading="required" />
 </content>
 ```
 
-The name must follow the naming convention described above. 
-Additionally, as the shared functionality content module is a prerequisite for the plugin to work, the `loading` attribute must be set to `required`.
+The module name follows the same naming convention. 
+Since it provides necessary shared behavior, provide a `loading="required"` to indicate that it is required for the plugin to work.
 
 ## Packaging and running
 
-The plugin can be packaged and run in the IDE. 
-Use the `buildPlugin` Gradle task to build the plugin.
+Build the plugin with the `buildPlugin` Gradle task.
+The IntelliJ Platform Gradle Plugin packages content modules automatically, with each module as a separate JAR under `lib/modules`.
 
-The IntelliJ Platform plugin will automatically handle the correct packaging of content modules. Each content module needs to be packaged separately, into a JAR with a name following the convention, and put into the `modules` directory.
-
-```
+```text
 mincssrel-1.0.0.zip
-|-mincssrel/
-  |-lib/
-    |-mincssrel-1.0.0.jar
-    |-modules/
-      |-mincssrel.shared.jar
+|- mincssrel/
+   |- lib/
+      |- mincssrel-1.0.0.jar
+      |- modules/
+         |- mincssrel.shared.jar
 ```
 
-Run the plugin in the IDE via the `runIde` Gradle task.
-Invoke the Search Everywhere action and search for the `Invoke Shared Mincssrel Action`.
-
-This is an action invoked from the required content module.
+Run the plugin in the IDE with the `runIde` Gradle task, open _Search Everywhere_, and execute `Invoke Shared Mincssrel Action`.
+This confirms that the required content module is loaded.
 
 ## Creating an optional content module
 
-In Plugin Model v2, an optional functionality belongs to a separate content module which will be loaded only when all the necessary dependencies are available.
+In Plugin Model v2, optional functionality belongs in a separate content module loaded only when all required dependencies are available.
+Create a second content module named `css`, which depends on the bundled CSS plugin developed by JetBrains.
 
-Let's create a second content module, `mincssrel.css` that will depend on a bundled CSS plugin. 
-
-Again, add a new Gradle module with `mincssrel` as a parent and make sure that the `settings.gradle.kts` includes this new Gradle module:
+Add a new Gradle module with `mincssrel` as the parent and ensure `settings.gradle.kts` includes it as a subproject.
 
 ```kotlin
 include("css")
 ```
 
-The build script for the `css` module (`css/build.gradle.kts`) will be initially identical to the build script for the `shared` module.
+Start `css/build.gradle.kts` with the same content as `shared/build.gradle.kts`.
 
 ```kotlin
 plugins {
@@ -207,9 +206,10 @@ repositories {
 
 ## Content module metadata
 
-In the spirit of the shared content module, create a new descriptor file `css/src/main/resources/mincssrel.css.xml`.
+The second plugin content module needs its own descriptor file. 
+Again, follow the naming convention and create the `css/src/main/resources/mincssrel.css.xml` file.
 
-```
+```xml
 <idea-plugin>
     <dependencies>
         <module name="mincssrel.shared" />
@@ -218,37 +218,31 @@ In the spirit of the shared content module, create a new descriptor file `css/sr
 </idea-plugin>
 ```
 
-The `css` content declares two dependencies, by using the Plugin Module v2 syntax in the `<dependencies>` element. 
+This descriptor uses Plugin Model v2 syntax in `<dependencies>` to declare both a content module dependency and a plugin dependency.
+The `<module>` element declares the dependency on the `mincssrel.shared` plugin content module, and the `<plugin>` element declares the dependency on the `com.intellij.css` plugin.
+Both dependencies declared in this descriptor are mandatory for loading this content module.
 
-1. The `css` content module requires a `mincssrel.shared` content module funcionality. The dependency on another content module is expressed by the `<module>` element.
-2. The `css` content module requires the CSS plugin provided by JetBrains. The dependency on a plugin is expressed by the `<plugin>` element.
+Now declare this content module in the main `plugin.xml` descriptor.
+In `src/main/resources/META-INF/plugin.xml`, add this line.
 
-All such dependencies are mandatory.
-
-Now in turn, declare this content module in the plugin descriptor `plugin.xml`:
-
-In `src/main/resources/META-INF/plugin.xml`, add the following lines:
-```
+```xml
 <module name="mincssrel.css" loading="optional" />
 ```
 
-If any of the `mincssrel.css` content module dependencies are not available, the content module will not be loaded. 
-However, by declaring this module as optional, the plugin will still work even if the `com.intellij.css` plugin is not installed.
-
+If any dependency for `mincssrel.css` is missing, this module will not load, but because it is marked optional, the rest of the plugin still works.
 As an example, the `com.intellij.css` plugin is not available in IntelliJ IDEA 2025.3 without a subscription.
 However, the situation changes in IntelliJ IDEA 2026.1, where this plugin is available even without a subscription, causing the `mincssrel.css` content module to be loaded.
 
 ## Content module build script
 
-To be consistent with the plugin template conventions, add the following line to the `gradle.properties`.
+To align with template conventions, add this line to `gradle.properties`.
 
 ```properties
 cssPlatformBundledPlugins = com.intellij.css
 ```
 
-Since the `css` content module depends on the `com.intellij.css` plugin and on the `shared` module, align the dependencies in the Gradle build script with the dependencies in the content module descriptor.
+Because the `css` module depends on both `shared` plugin content module and the `com.intellij.css` bundled plugin, mirror those dependencies in `css/build.gradle.kts`.
 
-In `css/build.gradle.kts`, add the following lines:
 ```kotlin
 implementation(project(":shared"))
 intellijPlatform {
@@ -256,16 +250,16 @@ intellijPlatform {
 }
 ```
 
-As a last step, declare the Gradle subproject in `build.gradle.kts`:
+Finally, register the `css` subproject in `build.gradle.kts`.
+
 ```kotlin
 pluginModule(implementation(project(":css")))
 ```
 
-## Showcasing a CSS content module
+## Showcasing the CSS content module
 
-To showcase the optional functionality, add a minimalistic action to the `css` content module.
-
-Create a bare-bones `css/src/main/kotlin/com/github/novotnyr/mincssrel/css/CssAction.kt`.
+To showcase optional functionality, add a minimal action to the `css` module.
+Create `css/src/main/kotlin/com/github/novotnyr/mincssrel/css/CssAction.kt`.
 
 ```kotlin
 package com.github.novotnyr.mincssrel.css
@@ -281,7 +275,7 @@ class CssAction : DumbAwareAction() {
 }
 ```
 
-Declare this action in the `mincssrel.css.xml` descriptor.
+Declare this action in the `css` plugin content module descriptor, specifically, in the `mincssrel.css.xml`.
 
 ```xml
 <actions>
@@ -292,33 +286,29 @@ Declare this action in the `mincssrel.css.xml` descriptor.
 </actions>
 ```
 
-Now, if you run the plugin in the IntelliJ IDEA 2026.1 that bundles the `com.intellij.css` and use the _Search Everywhere_ action, see that the *Invoke CSS Action* becomes be available.
+Run the plugin in IntelliJ IDEA 2026.1, use _Search Everywhere_, and verify that *Invoke CSS Action* is available.
 
-%TODO showcase PSI
+## Streamlining the setup
 
-# Streamlining the setup
+You can streamline the Gradle setup to make the build more opinionated and easier to maintain.
+A practical consolidation strategy is to move repositories to `settings.gradle.kts`, apply shared plugins in a single place, and declare shared toolchain and IntelliJ dependencies in one place.
 
-The Gradle build script setup can be streamlined, leading to more opinionated and simple code.
+## Declare repositories in Gradle settings
 
-1. Declare the repositories in the `settings.gradle.kts` file.
-2. Apply Kotlin and IntelliJ Platform Module plugin in a central place. 
-3. Declare Kotlin JVM toolchain and IntelliJ Platform dependencies in a central place as well.
+In `settings.gradle.kts`, add this line.
 
-## Declare repositories in Gradle Settings
-
-In `settings.gradle.kts`, add the following lines:
-```
+```kotlin
 id("org.jetbrains.intellij.platform.settings") version "2.13.1"
 ```
-Immediately, we need to adjust the version catalog, as the _Settings_ plugin with a specific version is in conflict with catalog items.
 
-In `gradle/libs.versions.toml`, remove the version from `intelliJPlatform`, as this is now specified in the Gradle Settings.
+Then adjust the version catalog, because the Settings plugin version is now managed in Gradle settings.
+In `gradle/libs.versions.toml`, remove the version from `intelliJPlatform`.
 
-```
+```toml
 intelliJPlatform = { id = "org.jetbrains.intellij.platform" }
 ```
 
-Let's centralize the repositories declaration into `settings.gradle.kts`.
+Now centralize repository declarations in `settings.gradle.kts`.
 
 ```kotlin
 import org.jetbrains.intellij.platform.gradle.extensions.intellijPlatform
@@ -335,33 +325,29 @@ dependencyResolutionManagement {
 }
 ```
 
-The `repositories` block is now no longer needed in any of the three `build.gradle.kts` files.
+After this change, you can remove `repositories` blocks from all three `build.gradle.kts` files.
 
 ## Consolidating Gradle plugin declaration
 
-Since every content module build script declares a dependency on Kotlin Gradle Plugin and IntelliJ Platform Module Gradle plugin, we can consolidate the declaration in the main build script.
+Because every content module applies the Kotlin and IntelliJ Platform Module plugins, centralize that configuration in the parent build script.
+In the top-level `build.gradle.kts`, add the following block.
 
-In `build.gradle.kts`, add the following lines:
 ```kotlin
 subprojects {
     plugins.apply("org.jetbrains.kotlin.jvm")
     plugins.apply("org.jetbrains.intellij.platform.module")
 }
 ```
-Due to the technical limitations of Gradle, we cannot use the version catalog here. 
-Instead, we use the explicit Gradle plugin identifiers.
 
-%TODO reload
-
-Now, the `plugins` block can be removed from both build scripts in two content modules.
+Use explicit plugin IDs here, because version-catalog aliases are not available in this context.
+After this change, remove `plugins` blocks from both content module build scripts.
 
 ## Consolidating Kotlin toolchain and dependencies
 
-As a final stage of consolidation, reuse the dependencies declaration along with Kotlin JVM toolchain. They are repeated in plugin build script, and two content modules build scripts.
-
-In the main `build.gradle.kts`, remove the `kotlin` block. Additionally, remove the `intellijIdea`, `bundledPlugins`, `plugins` and `bundledModules` declaration from `intellijPlatform` block. From now on, all dependencies are declared in the corresponding content modules.
-
-Instead of these, add an `allproject` block and declare dependencies and IntelliJ IDEA dependency consistently for all three Gradle modules.
+As a final consolidation step, move the repeated toolchain and base IntelliJ dependency declarations to a shared block.
+In the root `build.gradle.kts`, remove the root `kotlin` block.
+In the root `build.gradle.kts`, remove `intellijIdea`, `bundledPlugins`, `plugins`, and `bundledModules` from the root `intellijPlatform` block.
+Then add an `allprojects` block with shared declarations for all Gradle modules.
 
 ```kotlin
 allprojects {
@@ -376,14 +362,9 @@ allprojects {
 }
 ```
 
-And that's it! 
-After these optimizations, we end up with an empty build script for the `shared` module. We can even remove it, boiling project down to three files:
-
-- `settings.gradle.kts`
-- `build.gradle.kts`
-- `css/build.gradle.kts`.
-
-Even the build script for the `css` module is now reduced to simple dependency declaration.
+After these optimizations, `shared/build.gradle.kts` becomes empty and can be removed.
+At that point, the core build setup can be reduced to `settings.gradle.kts`, `build.gradle.kts`, and `css/build.gradle.kts`.
+The `css` build script is then reduced to a just a dependency declaration.
 
 ```kotlin
 dependencies {
@@ -394,19 +375,22 @@ dependencies {
 }
 ```
 
-# Packaging the two-content-module plugin
+## Packaging the two-content-module plugin
 
-The final plugin artifact now properly packages both modules in the correct places.
+The final plugin artifact packages both content modules in the correct location.
 
-```
+```text
 mincssrel-1.0.0.zip
-|-mincssrel/
-  |-lib/
-    |-mincssrel-1.0.0.jar
-    |-modules/
-      |-mincssrel.shared.jar
-      |-mincssrel.css.jar
+|- mincssrel/
+   |- lib/
+      |- mincssrel-1.0.0.jar
+      |- modules/
+         |- mincssrel.shared.jar
+         |- mincssrel.css.jar
 ```
 
-% TODO devkit autocomplete
-% TODO reload
+## Notes for expansion
+
+Add a PSI-based example for the CSS module.
+Add a section about DevKit support for `plugin.xml` completion in module descriptors.
+Add a section about descriptor reload behavior during development.

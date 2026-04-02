@@ -116,12 +116,12 @@ class SharedAction : DumbAwareAction() {
 ## Plugin content module descriptors
 
 Each plugin content module needs its own descriptor file. 
-Contrary to the `plugin.xml`, such a descriptor belongs to the root of the classpath. 
+Unlike the main `plugin.xml`, such a descriptor belongs to the root of the classpath. 
 The name of the descriptor file follows a naming convention:
 
 1. It should start with the value of `rootProject.name` from the `settings.gradle.kts`.
 2. Then, separated with a dot (`.`), follows the content module name.
-2. It has a `.xml` extension.
+3. It has a `.xml` extension.
 
 Following this convention, create `shared/src/main/resources/mincssrel.shared.xml` and declare the action there.
 
@@ -180,30 +180,6 @@ include("css")
 
 Start `css/build.gradle.kts` with the same content as `shared/build.gradle.kts`.
 
-```kotlin
-plugins {
-    alias(libs.plugins.kotlin)
-    alias(libs.plugins.intelliJPlatformModule)
-}
-
-dependencies {
-    intellijPlatform {
-        intellijIdea(providers.gradleProperty("platformVersion"))
-    }
-}
-
-kotlin {
-    jvmToolchain(21)
-}
-
-repositories {
-    mavenCentral()
-    intellijPlatform {
-        defaultRepositories()
-    }
-}
-```
-
 ## Content module metadata
 
 The second plugin content module needs its own descriptor file. 
@@ -244,9 +220,11 @@ cssPlatformBundledPlugins = com.intellij.css
 Because the `css` module depends on both `shared` plugin content module and the `com.intellij.css` bundled plugin, mirror those dependencies in `css/build.gradle.kts`.
 
 ```kotlin
-implementation(project(":shared"))
-intellijPlatform {
-    bundledPlugins(providers.gradleProperty("cssPlatformBundledPlugins").map { it.split(',') })
+dependencies {
+    implementation(project(":shared"))
+    intellijPlatform {
+        bundledPlugins(providers.gradleProperty("cssPlatformBundledPlugins").map { it.split(',') })
+    }
 }
 ```
 
@@ -293,7 +271,7 @@ Run the plugin in IntelliJ IDEA 2026.1, use _Search Everywhere_, and verify that
 You can streamline the Gradle setup to make the build more opinionated and easier to maintain.
 A practical consolidation strategy is to move repositories to `settings.gradle.kts`, apply shared plugins in a single place, and declare shared toolchain and IntelliJ dependencies in one place.
 
-## Declare repositories in Gradle settings
+## Declaring repositories in Gradle settings
 
 In `settings.gradle.kts`, add this line.
 
@@ -345,8 +323,7 @@ After this change, remove `plugins` blocks from both content module build script
 ## Consolidating Kotlin toolchain and dependencies
 
 As a final consolidation step, move the repeated toolchain and base IntelliJ dependency declarations to a shared block.
-In the root `build.gradle.kts`, remove the root `kotlin` block.
-In the root `build.gradle.kts`, remove `intellijIdea`, `bundledPlugins`, `plugins`, and `bundledModules` from the root `intellijPlatform` block.
+In the root `build.gradle.kts`, remove the `kotlin` block and remove `intellijIdea`, `bundledPlugins`, `plugins`, and `bundledModules` from the `intellijPlatform` block.
 Then add an `allprojects` block with shared declarations for all Gradle modules.
 
 ```kotlin
